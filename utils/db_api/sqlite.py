@@ -1,8 +1,8 @@
 import sqlite3
-
+from loader import db
 
 class Database:
-    def __init__(self, path_to_db="main.db"):
+    def __init__(self, path_to_db=db.path_to_db):
         self.path_to_db = path_to_db
 
     @property
@@ -29,12 +29,11 @@ class Database:
 
     def create_table_users(self):
         sql = """
-        CREATE TABLE Users (
-            id int NOT NULL,
-            Name varchar(255) NOT NULL,
-            email varchar(255),
-            language varchar(3),
-            PRIMARY KEY (id)
+        CREATE TABLE BotUsers (
+            id integer primary key,
+            fullname varchar(255) NOT NULL,
+            telegram_id int unique,
+            language varchar(3)
             );
 """
         self.execute(sql, commit=True)
@@ -46,40 +45,40 @@ class Database:
         ])
         return sql, tuple(parameters.values())
 
-    def add_user(self, id: int, name: str, email: str = None, language: str = 'uz'):
+    def add_user(self, fullname, tel_id, language):
         # SQL_EXAMPLE = "INSERT INTO Users(id, Name, email) VALUES(1, 'John', 'John@gmail.com')"
 
         sql = """
-        INSERT INTO Users(id, Name, email, language) VALUES(?, ?, ?, ?)
+        INSERT INTO BotUsers(fullname, telegram_id, language) VALUES(?, ?, ?)
         """
-        self.execute(sql, parameters=(id, name, email, language), commit=True)
+        self.execute(sql, parameters=(fullname, tel_id, language), commit=True)
 
     def select_all_users(self):
         sql = """
-        SELECT * FROM Users
+        SELECT * FROM BotUsers
         """
         return self.execute(sql, fetchall=True)
 
     def select_user(self, **kwargs):
         # SQL_EXAMPLE = "SELECT * FROM Users where id=1 AND Name='John'"
-        sql = "SELECT * FROM Users WHERE "
+        sql = "SELECT * FROM BotUsers WHERE "
         sql, parameters = self.format_args(sql, kwargs)
 
         return self.execute(sql, parameters=parameters, fetchone=True)
 
     def count_users(self):
-        return self.execute("SELECT COUNT(*) FROM Users;", fetchone=True)
+        return self.execute("SELECT COUNT(*) FROM BotUsers;", fetchone=True)
 
-    def update_user_email(self, email, id):
-        # SQL_EXAMPLE = "UPDATE Users SET email=mail@gmail.com WHERE id=12345"
+    # def update_user_email(self, email, id):
+    #     # SQL_EXAMPLE = "UPDATE Users SET email=mail@gmail.com WHERE id=12345"
 
-        sql = f"""
-        UPDATE Users SET email=? WHERE id=?
-        """
-        return self.execute(sql, parameters=(email, id), commit=True)
+    #     sql = f"""
+    #     UPDATE Users SET email=? WHERE id=?
+    #     """
+    #     return self.execute(sql, parameters=(email, id), commit=True)
 
     def delete_users(self):
-        self.execute("DELETE FROM Users WHERE TRUE", commit=True)
+        self.execute("DELETE FROM BotUsers WHERE TRUE", commit=True)
 
 
 def logger(statement):
@@ -89,3 +88,6 @@ Executing:
 {statement}
 _____________________________________________________
 """)
+
+a = Database()    
+a.create_table_users()

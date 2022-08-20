@@ -12,8 +12,8 @@ async def bot_start(message: types.Message):
     name = message.from_user.full_name
     # Foydalanuvchini bazaga qo'shamiz
     try:
-        db.add_user(id=message.from_user.id,
-                    name=name)
+        db.add_user(tel_id=message.from_user.id,
+                    fullname=name, language=message.from_user.language_code)
         await message.answer(f"Xush kelibsiz! {name}")
         # Adminga xabar beramiz
         count = db.count_users()[0]
