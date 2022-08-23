@@ -1,8 +1,12 @@
 import sqlite3
-
+from loader import db
 
 class Database:
+<<<<<<< HEAD
     def __init__(self, path_to_db='data/customer.db'):
+=======
+    def __init__(self, path_to_db=db.path_to_db):
+>>>>>>> 92a3aa76820dec9efde75530aaeef824966d78ab
         self.path_to_db = path_to_db
 
     @property
@@ -29,12 +33,20 @@ class Database:
 
     def create_table_users(self):
         sql = """
+<<<<<<< HEAD
         CREATE TABLE Verified (
             id integer primary key,
             telegram_id int,
             name varchar(20),
             zakaz text,
             price real
+=======
+        CREATE TABLE BotUsers (
+            id integer primary key,
+            fullname varchar(255) NOT NULL,
+            telegram_id int unique,
+            language varchar(3)
+>>>>>>> 92a3aa76820dec9efde75530aaeef824966d78ab
             );
 """
         self.execute(sql, commit=True)
@@ -46,6 +58,7 @@ class Database:
         ])
         return sql, tuple(parameters.values())
 
+<<<<<<< HEAD
     def add_user(self, fullname: str, telegram_id: int, language: str):
         # SQL_EXAMPLE = "INSERT INTO BotUsers(fullname, telegram_id, language) VALUES(1, 'John', 'John@gmail.com')"
 
@@ -57,6 +70,19 @@ class Database:
     def select_all_users(self):
         sql = """
         SELECT * FROM BotUsers;
+=======
+    def add_user(self, fullname, tel_id, language):
+        # SQL_EXAMPLE = "INSERT INTO Users(id, Name, email) VALUES(1, 'John', 'John@gmail.com')"
+
+        sql = """
+        INSERT INTO BotUsers(fullname, telegram_id, language) VALUES(?, ?, ?)
+        """
+        self.execute(sql, parameters=(fullname, tel_id, language), commit=True)
+
+    def select_all_users(self):
+        sql = """
+        SELECT * FROM BotUsers
+>>>>>>> 92a3aa76820dec9efde75530aaeef824966d78ab
         """
         return self.execute(sql, fetchall=True)
 
@@ -70,13 +96,13 @@ class Database:
     def count_users(self):
         return self.execute("SELECT COUNT(*) FROM BotUsers;", fetchone=True)
 
-    def update_user_email(self, email, id):
-        # SQL_EXAMPLE = "UPDATE Users SET email=mail@gmail.com WHERE id=12345"
+    # def update_user_email(self, email, id):
+    #     # SQL_EXAMPLE = "UPDATE Users SET email=mail@gmail.com WHERE id=12345"
 
-        sql = f"""
-        UPDATE Users SET email=? WHERE id=?
-        """
-        return self.execute(sql, parameters=(email, id), commit=True)
+    #     sql = f"""
+    #     UPDATE Users SET email=? WHERE id=?
+    #     """
+    #     return self.execute(sql, parameters=(email, id), commit=True)
 
     def delete_users(self):
         self.execute("DELETE FROM BotUsers WHERE TRUE", commit=True)
@@ -191,5 +217,10 @@ Executing:
 _____________________________________________________
 """)
 
+<<<<<<< HEAD
 # a = Database()
 # a.alter_table()
+=======
+a = Database()    
+a.create_table_users()
+>>>>>>> 92a3aa76820dec9efde75530aaeef824966d78ab
