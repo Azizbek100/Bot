@@ -7,6 +7,8 @@ from states.holatlar import Food
 from aiogram.dispatcher import FSMContext
 from utils.misc.product import Product
 from aiogram.types import LabeledPrice
+from data.config import ADMINS
+from data.products import FAST_SHIPPING, REGULAR_SHIPPING, PICKUP_SHIPPING
 
 @dp.message_handler(text='Меню', state='*')
 async def send_menu(message: types.Message, state: FSMContext):
@@ -14,12 +16,14 @@ async def send_menu(message: types.Message, state: FSMContext):
     await message.answer('Выберите категорию', reply_markup=menu_bot.menu)
     await Food.zakaz.set()
 
-@dp.message_handler(text='Главное меню')
-async def send_main_menu(message: types.Message):
+@dp.message_handler(text='Главное меню', state='*')
+async def send_main_menu(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer('Главное меню', reply_markup=menu_bot.main_menu)
 
-@dp.message_handler(text='📥 Корзина')
+@dp.message_handler(text='📥 Корзина', state='*')
 async def send_menu(message: types.Message, state: FSMContext):
+    await state.finish()
     if len(db.get_korzinka(message.from_user.id))==0:
         await message.answer('Siz hech narsa buyurtirmadingiz iltimos biror nima buyurtma bering', reply_markup=menu_bot.menu)
         await Food.zakaz.set()
@@ -69,7 +73,7 @@ async def clear_zakaz(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     db.clear_del(call.message.chat.id)
     await call.answer("Buyurtmalar qismiga qo`shildi✅", show_alert=True)
-    await call.message.answer('Buyurtmani tasdiqlashingiz mumkin', reply_markup=menu_bot.main_menu)
+    await call.message.answer('Buyurtmani "Mening buyurtmalarim" qismida tasdiqlashingiz mumkin', reply_markup=menu_bot.main_menu)
     await state.finish()
 
 @dp.callback_query_handler(state=Food.cart)
@@ -80,7 +84,7 @@ async def clear_zakaz(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer('Korzinka yangilandi', reply_markup=menu_bot.main_menu)
     await state.finish()
 
-@dp.message_handler(text='Мои заказы🗂', state='*')
+@dp.message_handler(text='Mening buyurtmalarim🗂', state='*')
 async def send_main_menu(message: types.Message, state: FSMContext):
     await state.finish()
     try:
@@ -95,13 +99,13 @@ async def send_main_menu(message: types.Message, state: FSMContext):
         await message.answer(msg, reply_markup=menu_bot.create_inline(a[0]))
         await Food.verify.set()
     except:
-        await message.answer('Siz hech qanday buyurtmani tasdiqlamgansiz\nBuyurtmani tasdqilang', reply_markup=menu_bot.main_menu)
+        await message.answer('Siz hech qanday buyurtmani tasdiqlamagansiz\nBuyurtmani tasdiqlang', reply_markup=menu_bot.main_menu)
 
 @dp.callback_query_handler(text='next', state=Food.verify)
 async def go_next(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     a = db.get_next(user=data.get('user'), tel_id=call.from_user.id)
-    print(a)
+    # print(a)
     if a != None: 
         msg = ""
         msg += a[3]
@@ -118,9 +122,9 @@ async def go_next(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     try:
         a = db.get_prev(user=data.get('user'), tel_id=call.from_user.id)
-        print(a)
+        # print(a)
         b = a[-1]
-        print(b)
+        # print(b)
         if a != None:
             msg = ""
             msg += b[3]
@@ -643,6 +647,7 @@ async def get_order_id(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     order_id = call.data.split(':')[1]
     a = db.get_pay_order(call.from_user.id, order_id)
+    # print(a)
     product = Product(
         title="To'lov qilish uchun quyidagi tugmani bosing",
         description=a[3],
@@ -650,14 +655,14 @@ async def get_order_id(call: types.CallbackQuery, state: FSMContext):
         prices=[
             LabeledPrice(
                 label='Barcha buyurtmalar',
-                amount=int(a[-1])*100,
+                amount=int(a[-2])*100,
             ),
             LabeledPrice(
                 label='Yetkazib berish',
                 amount=2000000,
             ),
         ],
-    start_parameter='create_invoice_products',
+    start_parameter='create_invoice_product',
     need_email=True,
     need_phone_number=True,
     need_name=True,
@@ -669,4 +674,38 @@ async def get_order_id(call: types.CallbackQuery, state: FSMContext):
     await state.update_data(
         {'pay_order_id': order_id}
     )
-    
+    await Food.order_verify.set()
+
+
+@dp.shipping_query_handler(state=Food.order_verify)
+async def choose_shipping(query: types.ShippingQuery, state: FSMContext):
+    if query.shipping_address.country_code != "UZ":
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        ok=False,
+                                        error_message="Chet elga yetkazib bera olmaymiz")
+    elif query.shipping_address.city.lower() == "urganch":
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        shipping_options=[FAST_SHIPPING, REGULAR_SHIPPING, PICKUP_SHIPPING],
+                                        ok=True)
+    else:
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        shipping_options=[REGULAR_SHIPPING],
+                                        ok=True)
+    await Food.finish_order.set()
+
+@dp.pre_checkout_query_handler(state=Food.finish_order)
+async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery, state: FSMContext):
+    await bot.answer_pre_checkout_query(pre_checkout_query_id=pre_checkout_query.id,
+                                        ok=True)
+    data = await state.get_data()
+    a = data.get('pay_order_id')
+    print(data.get('pay_order_id'))
+    db.add_ordered(a, pre_checkout_query.from_user.id)
+    await bot.send_message(chat_id=pre_checkout_query.from_user.id,
+                           text="Xaridingiz uchun rahmat! Siz bilan bog'lanamiz")
+    await bot.send_message(chat_id=ADMINS[0],
+                           text=f"Quyidagi mahsulot sotildi: {pre_checkout_query.invoice_payload}\n"
+                            f"ID: {pre_checkout_query.id}\n"
+                            f"Telegram user: {pre_checkout_query.from_user.first_name}\n"
+                            f"Xaridor: {pre_checkout_query.order_info.name}, tel: {pre_checkout_query.order_info.phone_number}")
+    await state.finish()

@@ -1,10 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 
 
-main_menu = ReplyKeyboardMarkup(resize_keyboard=True)
-main_menu.row('Меню', '📥 Корзина')
-main_menu.row('🚖 Оформить заказ')
-
 menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text='🍔 Бургер'), KeyboardButton(text='🌭 Хот-Дог')],
@@ -23,8 +19,8 @@ korzinka.add(InlineKeyboardButton(text='❌Korzinkani tozalash❌', callback_dat
 
 main_menu = ReplyKeyboardMarkup(resize_keyboard=True)
 main_menu.row('Меню', '📥 Корзина')
-main_menu.row('🚖 Оформить заказ')
-main_menu.row('Мои заказы🗂')
+# main_menu.row('🚖 Оформить заказ')
+main_menu.row('Mening buyurtmalarim🗂')
 
 burgers = ReplyKeyboardMarkup(resize_keyboard=True)
 burgers.row('Бургер Классический', 'Бургер Двойной')

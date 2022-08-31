@@ -3,6 +3,8 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 class Food(StatesGroup):
     menu = State()
     verify = State()
+    order_verify = State()
+    finish_order = State()
     zakaz = State()
     cart = State()
     zakaznoy = State()

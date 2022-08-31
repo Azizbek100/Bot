@@ -193,6 +193,20 @@ class Database:
         """
         return self.execute(sql=sql, parameters=(tel_id, pay_id), fetchone=True)
 
+    def addd(self):
+        sql = """alter table Verified
+        add ordered varchar(10);
+        """
+        self.execute(sql=sql, commit=True)
+
+    def add_ordered(self, order_id, tel_id):
+        sql = """delete from Verified
+        where id = ?
+        and telegram_id = ?;
+        """
+        self.execute(sql=sql, parameters=(order_id, tel_id), commit=True)
+
+
 def logger(statement):
     print(f"""
 _____________________________________________________
