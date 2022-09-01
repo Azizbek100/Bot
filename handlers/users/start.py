@@ -23,6 +23,6 @@ async def bot_start(message: types.Message, state: FSMContext):
 
     except sqlite3.IntegrityError as err:
         await bot.send_message(chat_id=ADMINS[0], text=f"{name} bazaga oldin qo'shilgan")
-        await message.answer(f"Здравствуйте,{message.from_user.first_name}!\nЭто бот службы доставки Garage Burger\nОтдел доставки работает 24/7\nВыберите пожалуйста.", reply_markup=main_menu)
+        await message.answer(f"Здравствуйте,{message.from_user.first_name}!\nЭто бот службы доставки\nОтдел доставки работает 24/7\nВыберите пожалуйста.", reply_markup=main_menu)
 
 
